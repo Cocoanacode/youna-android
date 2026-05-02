@@ -12,12 +12,12 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Unzip project
-        run: unzip YOUNA_full_project.zip -d project
-
-      - name: Move files
         run: |
-          mv project/*/* .
+          rm -rf project
+          unzip -o YOUNA_full_project.zip -d project
+          cp -r project/* .
           ls -la
+          ls -la app || true
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -25,14 +25,19 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Make gradlew executable
-        run: chmod +x gradlew || true
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.7
 
       - name: Build APK
-        run: ./gradlew assembleDebug || echo "Gradle wrapper missing"
+        run: gradle assembleDebug
+
+      - name: Show APK output
+        run: ls -R app/build/outputs/apk || true
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: youna-debug-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          path: app/build/outputs/apk/debug/*.apk
